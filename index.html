@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CYPHER.PY — Learn Python or Die Trying</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=VT323&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+<style>
+  :root {
+    --green: #00ff88;
+    --green-dim: #00cc66;
+    --green-glow: rgba(0,255,136,0.15);
+    --cyan: #00e5ff;
+    --red: #ff2244;
+    --yellow: #ffdd00;
+    --bg: #020c08;
+    --bg2: #050f0a;
+    --bg3: #071410;
+    --border: rgba(0,255,136,0.25);
+    --text: #c8ffe0;
+    --text-dim: #5a9970;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-display: 'Orbitron', sans-serif;
+    --font-vt: 'VT323', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Scanlines overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* CRT flicker */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.6) 100%);
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* Background grid */
+  .bg-grid {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Rain canvas */
+  #rain-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.06;
+  }
+
+  .app {
+    position: relative;
+    z-index: 10;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .logo {
+    font-family: var(--font-display);
+    font-size: clamp(18px, 3vw, 28px);
+    font-weight: 900;
+    color: var(--green);
+    text-shadow: 0 0 20px var(--green), 0 0 40px rgba(0,255,136,0.3);
+    letter-spacing: 4px;
+    animation: flicker 8s infinite;
+  }
+
+  .logo span { color: var(--cyan); }
+
+  @keyframes flicker {
+    0%,89%,91%,93%,100% { opacity: 1; }
+    90%,92% { opacity: 0.7; }
+  }
+
+  .tagline {
+    font-family: var(--font-vt);
+    font-size: 16px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin-top: 2px;
+  }
+
+  .status-bar {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--green);
+    text-shadow: 0 0 10px var(--green);
+  }
+
+  /* XP Bar */
+  .xp-container {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 120px;
+  }
+
+  .xp-bar-outer {
+    height: 6px;
+    background: rgba(0,255,136,0.1);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .xp-bar-inner {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green-dim), var(--green));
+    box-shadow: 0 0 8px var(--green);
+    border-radius: 3px;
+    transition: width 0.6s ease;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 16px;
+    flex: 1;
+  }
+
+  @media (max-width: 768px) {
+    .main-layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    background: rgba(0,255,136,0.06);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 12px;
+    font-family: var(--font-display);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--green);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-header::before {
+    content: '▶';
+    font-size: 8px;
+    opacity: 0.6;
+  }
+
+  .mission-list {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 420px;
+    overflow-y: auto;
+  }
+
+  .mission-list::-webkit-scrollbar { width: 4px; }
+  .mission-list::-webkit-scrollbar-track { background: transparent; }
+  .mission-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .mission-item {
+    padding: 8px 10px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .mission-item:hover {
+    background: var(--green-glow);
+    border-color: var(--border);
+  }
+
+  .mission-item.active {
+    background: rgba(0,255,136,0.1);
+    border-color: var(--green-dim);
+  }
+
+  .mission-item.completed {
+    opacity: 0.5;
+  }
+
+  .mission-item.completed::after {
+    content: '✓';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--green);
+    font-size: 14px;
+  }
+
+  .mission-item.locked {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .mission-num {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+  }
+
+  .mission-name {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .mission-diff {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+  }
+
+  .diff-basico { background: rgba(0,255,136,0.15); color: var(--green); }
+  .diff-intermedio { background: rgba(0,229,255,0.12); color: var(--cyan); }
+  .diff-avanzado { background: rgba(255,34,68,0.12); color: var(--red); }
+
+  /* ── TERMINAL AREA ── */
+  .terminal-area {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Mission brief */
+  .mission-brief {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .brief-header {
+    background: rgba(0,255,136,0.06);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .brief-id {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--green);
+    letter-spacing: 3px;
+  }
+
+  .brief-xp {
+    font-size: 11px;
+    color: var(--yellow);
+  }
+
+  .brief-body {
+    padding: 14px;
+  }
+
+  .brief-title {
+    font-family: var(--font-display);
+    font-size: clamp(13px, 2vw, 17px);
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 8px;
+    text-shadow: 0 0 10px rgba(0,255,136,0.4);
+  }
+
+  .brief-story {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    margin-bottom: 12px;
+    font-style: italic;
+  }
+
+  .brief-objective {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+    background: rgba(0,255,136,0.04);
+    border-left: 2px solid var(--green-dim);
+    padding: 10px 14px;
+    border-radius: 0 3px 3px 0;
+  }
+
+  .hint-btn {
+    margin-top: 10px;
+    background: transparent;
+    border: 1px solid rgba(0,229,255,0.3);
+    color: var(--cyan);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.15s;
+  }
+
+  .hint-btn:hover {
+    background: rgba(0,229,255,0.08);
+    border-color: var(--cyan);
+  }
+
+  .hint-box {
+    margin-top: 10px;
+    background: rgba(0,229,255,0.05);
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 3px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--cyan);
+    display: none;
+    line-height: 1.6;
+  }
+
+  .hint-box.visible { display: block; }
+
+  /* Editor + Output */
+  .code-section {
+    display: grid;
+    grid-template-rows: auto auto;
+    gap: 10px;
+  }
+
+  .editor-wrapper {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .editor-toolbar {
+    background: rgba(0,0,0,0.4);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .editor-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+
+  .editor-title {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    flex: 1;
+    text-align: center;
+  }
+
+  .run-btn {
+    background: var(--green);
+    color: #000;
+    border: none;
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 6px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .run-btn:hover {
+    background: #00ffaa;
+    box-shadow: 0 0 15px rgba(0,255,136,0.5);
+  }
+
+  .run-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .run-btn.loading {
+    color: transparent;
+  }
+
+  .run-btn.loading::after {
+    content: '...';
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    color: #000;
+    animation: dots 1s infinite;
+  }
+
+  @keyframes dots {
+    0% { content: '.'; }
+    33% { content: '..'; }
+    66% { content: '...'; }
+  }
+
+  #code-editor {
+    width: 100%;
+    min-height: 200px;
+    max-height: 320px;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: vertical;
+    color: var(--green);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 14px 16px;
+    caret-color: var(--green);
+    tab-size: 4;
+  }
+
+  #code-editor::selection {
+    background: rgba(0,255,136,0.2);
+  }
+
+  /* Output terminal */
+  .output-terminal {
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .output-header {
+    background: rgba(0,0,0,0.6);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 12px;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    display: flex;
+    gap: 16px;
+  }
+
+  .output-label { color: var(--green-dim); }
+
+  #output-content {
+    padding: 12px 14px;
+    font-family: var(--font-vt);
+    font-size: 18px;
+    line-height: 1.5;
+    min-height: 80px;
+    max-height: 180px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  #output-content::-webkit-scrollbar { width: 4px; }
+  #output-content::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .out-success { color: var(--green); }
+  .out-error { color: var(--red); }
+  .out-system { color: var(--text-dim); }
+  .out-warn { color: var(--yellow); }
+  .out-cyan { color: var(--cyan); }
+
+  /* Result feedback */
+  .result-banner {
+    border-radius: 4px;
+    padding: 12px 16px;
+    font-family: var(--font-display);
+    font-size: 12px;
+    letter-spacing: 2px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-banner.success {
+    display: flex;
+    background: rgba(0,255,136,0.1);
+    border: 1px solid var(--green-dim);
+    color: var(--green);
+  }
+
+  .result-banner.fail {
+    display: flex;
+    background: rgba(255,34,68,0.08);
+    border: 1px solid rgba(255,34,68,0.3);
+    color: var(--red);
+  }
+
+  .result-icon { font-size: 20px; }
+
+  /* Pyodide loader */
+  #loader-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  .loader-logo {
+    font-family: var(--font-display);
+    font-size: clamp(24px, 5vw, 48px);
+    font-weight: 900;
+    color: var(--green);
+    text-shadow: 0 0 30px var(--green);
+    letter-spacing: 6px;
+    animation: flicker 4s infinite;
+  }
+
+  .loader-status {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+  }
+
+  .loader-bar-outer {
+    width: 300px;
+    height: 4px;
+    background: rgba(0,255,136,0.1);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .loader-bar-inner {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green-dim), var(--green));
+    box-shadow: 0 0 10px var(--green);
+    border-radius: 2px;
+    animation: loading-bar 3s ease forwards;
+  }
+
+  @keyframes loading-bar {
+    from { width: 0; }
+    to { width: 90%; }
+  }
+
+  /* Notification */
+  .notif {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--bg2);
+    border: 1px solid var(--green);
+    border-radius: 4px;
+    padding: 12px 18px;
+    font-size: 13px;
+    color: var(--green);
+    z-index: 9998;
+    font-family: var(--font-display);
+    letter-spacing: 2px;
+    box-shadow: 0 0 20px rgba(0,255,136,0.2);
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+  }
+
+  .notif.show { transform: translateX(0); }
+
+  /* Glitch effect on level up */
+  @keyframes glitch {
+    0%,100% { text-shadow: 0 0 20px var(--green); transform: none; }
+    20% { text-shadow: 2px 0 var(--red), -2px 0 var(--cyan); transform: skewX(-2deg); }
+    40% { text-shadow: -2px 0 var(--red), 2px 0 var(--cyan); transform: skewX(2deg); }
+    60% { text-shadow: 0 0 20px var(--green); transform: none; }
+  }
+
+  .glitch { animation: glitch 0.4s ease; }
+
+  .pyodide-badge {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    opacity: 0.5;
+    text-align: center;
+    padding-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<canvas id="rain-canvas"></canvas>
+
+<!-- Loader -->
+<div id="loader-screen">
+  <div class="loader-logo">CYPHER<span style="color:var(--cyan)">.PY</span></div>
+  <div class="loader-status" id="loader-text">INICIALIZANDO ENTORNO PYTHON...</div>
+  <div class="loader-bar-outer">
+    <div class="loader-bar-inner"></div>
+  </div>
+  <div style="font-size:11px;color:var(--text-dim);letter-spacing:1px;margin-top:8px;">Cargando Pyodide — Python real en tu browser</div>
+</div>
+
+<div class="app">
+  <!-- Header -->
+  <header class="header">
+    <div>
+      <div class="logo">CYPHER<span>.PY</span></div>
+      <div class="tagline">&gt; LEARN PYTHON OR DIE TRYING_</div>
+    </div>
+    <div class="status-bar">
+      <div class="stat">
+        <div class="stat-label">NIVEL</div>
+        <div class="stat-value" id="stat-level">01</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">MISIONES</div>
+        <div class="stat-value" id="stat-missions">0/0</div>
+      </div>
+      <div class="xp-container">
+        <div class="stat-label" style="font-size:9px;color:var(--text-dim);letter-spacing:2px;">XP</div>
+        <div class="xp-bar-outer">
+          <div class="xp-bar-inner" id="xp-bar" style="width:0%"></div>
+        </div>
+        <div class="stat-label" id="xp-text" style="text-align:right;">0 / 100</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <div class="main-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="panel">
+        <div class="panel-header">MISIONES</div>
+        <div class="mission-list" id="mission-list"></div>
+      </div>
+      <div class="pyodide-badge">⚡ Python via Pyodide WASM</div>
+    </aside>
+
+    <!-- Terminal Area -->
+    <div class="terminal-area">
+      <!-- Mission Brief -->
+      <div class="mission-brief">
+        <div class="brief-header">
+          <div class="brief-id" id="brief-id">MISSION_001</div>
+          <div class="brief-xp" id="brief-xp">+25 XP</div>
+        </div>
+        <div class="brief-body">
+          <div class="brief-title" id="brief-title">Cargando misión...</div>
+          <div class="brief-story" id="brief-story"></div>
+          <div class="brief-objective" id="brief-objective"></div>
+          <button class="hint-btn" onclick="toggleHint()">[ DECRYPT HINT ]</button>
+          <div class="hint-box" id="hint-box"></div>
+        </div>
+      </div>
+
+      <!-- Code Editor -->
+      <div class="code-section">
+        <div class="editor-wrapper">
+          <div class="editor-toolbar">
+            <div class="editor-dots">
+              <div class="dot dot-r"></div>
+              <div class="dot dot-y"></div>
+              <div class="dot dot-g"></div>
+            </div>
+            <div class="editor-title">exploit.py — EDITOR</div>
+            <button class="run-btn" id="run-btn" onclick="runCode()">▶ EJECUTAR</button>
+          </div>
+          <textarea id="code-editor" spellcheck="false" placeholder="# escribe tu código aquí..."></textarea>
+        </div>
+
+        <!-- Output -->
+        <div class="output-terminal">
+          <div class="output-header">
+            <span class="output-label">OUTPUT</span>
+            <span id="output-status" class="out-system">IDLE</span>
+          </div>
+          <div id="output-content"><span class="out-system">&gt; Esperando código...</span></div>
+        </div>
+
+        <!-- Result banner -->
+        <div class="result-banner" id="result-banner">
+          <span class="result-icon" id="result-icon">⚡</span>
+          <span id="result-text">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  MATRIX RAIN
+// ══════════════════════════════════════════════
+const canvas = document.getElementById('rain-canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*()[]{}|<>/\\';
+const fontSize = 14;
+const cols = Math.floor(canvas.width / fontSize);
+const drops = Array(cols).fill(1);
+
+function drawRain() {
+  ctx.fillStyle = 'rgba(2,12,8,0.05)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#00ff88';
+  ctx.font = fontSize + 'px Share Tech Mono';
+  drops.forEach((y, i) => {
+    const char = chars[Math.floor(Math.random() * chars.length)];
+    ctx.fillText(char, i * fontSize, y * fontSize);
+    if (y * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  });
+}
+setInterval(drawRain, 50);
+
+// ══════════════════════════════════════════════
+//  MISSIONS DATA
+// ══════════════════════════════════════════════
+const missions = [
+  {
+    id: 'M-001',
+    name: 'Primera Intrusión',
+    diff: 'basico',
+    xp: 25,
+    story: 'Eres "Ghost", recién reclutado por el colectivo CYPHER. Tu primera tarea: probar que puedes comunicarte con la red.',
+    objective: 'Usa <code>print()</code> para mostrar exactamente: <strong>ACCESS GRANTED</strong>',
+    hint: 'La función print() muestra texto en pantalla. Las cadenas de texto van entre comillas: print("hola")',
+    starter: '# Tu primer exploit\n# Muestra exactamente: ACCESS GRANTED\n\n',
+    validate: (output) => output.trim() === 'ACCESS GRANTED'
+  },
+  {
+    id: 'M-002',
+    name: 'Variables en la Sombra',
+    diff: 'basico',
+    xp: 30,
+    story: 'Para operar en la oscuridad necesitas identidades. En Python, las variables son tus alias.',
+    objective: 'Crea una variable llamada <code>alias</code> con el valor <code>"Ghost"</code> y otra llamada <code>nivel</code> con el valor <code>7</code>. Luego imprime ambas en líneas separadas.',
+    hint: 'Para crear variables: nombre = valor\nEjemplo: ciudad = "Neo-Tokyo"\nPuedes hacer varios print() separados.',
+    starter: '# Crea tus variables y muéstralas\n\nalias = \nnivel = \n\n',
+    validate: (output) => {
+      const lines = output.trim().split('\n').map(l => l.trim());
+      return lines.includes('Ghost') && lines.includes('7');
+    }
+  },
+  {
+    id: 'M-003',
+    name: 'Tipos de Datos',
+    diff: 'basico',
+    xp: 35,
+    story: 'Los datos fluyen por la red en distintos formatos. Un hacker sabe identificar cada tipo.',
+    objective: 'Crea: un <code>str</code>, un <code>int</code>, un <code>float</code> y un <code>bool</code>. Imprime el tipo de cada uno usando <code>type()</code>.',
+    hint: 'type() te dice el tipo de dato:\nprint(type("hola"))  # <class \'str\'>\nprint(type(42))      # <class \'int\'>\nprint(type(3.14))    # <class \'float\'>\nprint(type(True))    # <class \'bool\'>',
+    starter: '# Declara 4 variables de diferentes tipos\n# y muestra su tipo con type()\n\n',
+    validate: (output) => {
+      return output.includes("<class 'str'>") &&
+             output.includes("<class 'int'>") &&
+             output.includes("<class 'float'>") &&
+             output.includes("<class 'bool'>");
+    }
+  },
+  {
+    id: 'M-004',
+    name: 'Loop de Vigilancia',
+    diff: 'intermedio',
+    xp: 45,
+    story: 'Los sistemas de seguridad escanean en ciclos. Tú también debes dominar la repetición.',
+    objective: 'Usa un loop <code>for</code> para imprimir los números del <strong>1 al 5</strong>, cada uno en su propia línea.',
+    hint: 'range(inicio, fin) genera números. El fin es exclusivo:\nfor i in range(1, 6):  # genera 1,2,3,4,5\n    print(i)',
+    starter: '# Loop de vigilancia: imprime 1 al 5\n\n',
+    validate: (output) => {
+      const lines = output.trim().split('\n').map(l => l.trim());
+      return lines.join(',') === '1,2,3,4,5';
+    }
+  },
+  {
+    id: 'M-005',
+    name: 'Lista Negra',
+    diff: 'intermedio',
+    xp: 50,
+    story: 'Todo colectivo tiene una lista de objetivos. En Python, las listas almacenan múltiples valores.',
+    objective: 'Crea una lista llamada <code>targets</code> con 3 strings: <code>"NeoCorp"</code>, <code>"SkyNet"</code>, <code>"OmniOS"</code>. Luego imprime cada elemento usando un loop.',
+    hint: 'Lista: targets = ["item1", "item2", "item3"]\nLoop sobre lista:\nfor t in targets:\n    print(t)',
+    starter: '# Lista negra de objetivos\n\ntargets = \n\n',
+    validate: (output) => {
+      const lines = output.trim().split('\n').map(l => l.trim());
+      return lines.includes('NeoCorp') && lines.includes('SkyNet') && lines.includes('OmniOS');
+    }
+  },
+  {
+    id: 'M-006',
+    name: 'Función Encubierta',
+    diff: 'intermedio',
+    xp: 55,
+    story: 'Las operaciones encubiertas se encapsulan. Las funciones en Python hacen exactamente eso.',
+    objective: 'Define una función <code>hack(target)</code> que retorne el string <code>"HACKING: " + target</code>. Luego llámala con el argumento <code>"NeoCorp"</code> e imprime el resultado.',
+    hint: 'def nombre_funcion(parametro):\n    return valor\n\nresultado = hack("NeoCorp")\nprint(resultado)',
+    starter: '# Define tu función encubierta\n\ndef hack(target):\n    # tu código aquí\n    \n\n',
+    validate: (output) => output.trim() === 'HACKING: NeoCorp'
+  },
+  {
+    id: 'M-007',
+    name: 'Condicionales del Destino',
+    diff: 'intermedio',
+    xp: 50,
+    story: 'En el ciberespacio, cada decisión importa. Los condicionales son tu árbol de decisiones.',
+    objective: 'Crea una variable <code>acceso</code> con valor <code>True</code>. Si es True, imprime <code>"ACCESO CONCEDIDO"</code>. Si es False, imprime <code>"ACCESO DENEGADO"</code>.',
+    hint: 'if condicion:\n    print("caso verdadero")\nelse:\n    print("caso falso")',
+    starter: '# Sistema de control de acceso\n\nacceso = True\n\n',
+    validate: (output) => output.trim() === 'ACCESO CONCEDIDO'
+  },
+  {
+    id: 'M-008',
+    name: 'Diccionario del Agente',
+    diff: 'intermedio',
+    xp: 60,
+    story: 'Cada agente tiene un perfil encriptado. Los diccionarios son la estructura perfecta para eso.',
+    objective: 'Crea un diccionario <code>agente</code> con claves <code>"nombre"</code>, <code>"nivel"</code> y <code>"activo"</code>. Imprime cada valor en líneas separadas.',
+    hint: 'agente = {\n    "nombre": "Ghost",\n    "nivel": 7,\n    "activo": True\n}\nprint(agente["nombre"])',
+    starter: '# Perfil del agente\n\nagente = {\n    \n}\n\n',
+    validate: (output) => {
+      const lines = output.trim().split('\n');
+      return lines.length >= 3;
+    }
+  },
+  {
+    id: 'M-009',
+    name: 'Clase Fantasma',
+    diff: 'avanzado',
+    xp: 80,
+    story: 'Los hackers élite crean sus propias herramientas. Las clases son los blueprints del código.',
+    objective: 'Crea una clase <code>Hacker</code> con un método <code>__init__</code> que acepte <code>nombre</code> y lo guarde. Agrega un método <code>atacar(target)</code> que retorne <code>f"{self.nombre} ataca {target}"</code>. Instancia la clase con tu nombre e imprime el resultado de atacar <code>"SkyNet"</code>.',
+    hint: 'class Hacker:\n    def __init__(self, nombre):\n        self.nombre = nombre\n    def atacar(self, target):\n        return f"{self.nombre} ataca {target}"\n\ngh = Hacker("Ghost")\nprint(gh.atacar("SkyNet"))',
+    starter: '# Define la clase Hacker\n\nclass Hacker:\n    def __init__(self, nombre):\n        \n    \n    def atacar(self, target):\n        \n\n',
+    validate: (output) => output.trim().includes('ataca SkyNet')
+  },
+  {
+    id: 'M-010',
+    name: 'Comprensión Total',
+    diff: 'avanzado',
+    xp: 75,
+    story: 'El dominio del Python incluye la capacidad de escribir código limpio y poderoso en una sola línea.',
+    objective: 'Usa una <strong>list comprehension</strong> para crear una lista con los cuadrados de los números del 1 al 5. Imprime la lista completa.',
+    hint: 'List comprehension: [expresion for elemento in iterable]\nEjemplo: cuadrados = [x**2 for x in range(1, 6)]\nprint(cuadrados)',
+    starter: '# List comprehension: cuadrados del 1 al 5\n\ncuadrados = \n\nprint(cuadrados)\n',
+    validate: (output) => output.trim() === '[1, 4, 9, 16, 25]'
+  },
+  {
+    id: 'M-011',
+    name: 'Decorador Oscuro',
+    diff: 'avanzado',
+    xp: 90,
+    story: 'Los decoradores envuelven funciones con poder extra. La herramienta definitiva del hacker Python.',
+    objective: 'Crea un decorador <code>log_acceso</code> que imprima <code>"[LOG] Ejecutando función"</code> antes de ejecutar la función decorada. Aplícalo a una función <code>conectar()</code> que imprima <code>"Conexión establecida"</code>.',
+    hint: 'def log_acceso(func):\n    def wrapper():\n        print("[LOG] Ejecutando función")\n        func()\n    return wrapper\n\n@log_acceso\ndef conectar():\n    print("Conexión establecida")\n\nconectar()',
+    starter: '# Decorador de logging\n\ndef log_acceso(func):\n    def wrapper():\n        \n        \n    return wrapper\n\n@log_acceso\ndef conectar():\n    \n\nconectar()\n',
+    validate: (output) => {
+      const lines = output.trim().split('\n').map(l => l.trim());
+      return lines[0] === '[LOG] Ejecutando función' && lines[1] === 'Conexión establecida';
+    }
+  },
+  {
+    id: 'M-012',
+    name: 'Operación Final',
+    diff: 'avanzado',
+    xp: 100,
+    story: 'Has llegado al núcleo. La misión final combina todo lo aprendido.',
+    objective: 'Crea una función <code>cifrar(texto)</code> que use un loop para construir un string donde cada carácter se reemplaza por su código ASCII usando <code>ord()</code> separados por guiones. Ejemplo: <code>cifrar("AB")</code> → <code>"65-66"</code>. Imprime <code>cifrar("PY")</code>.',
+    hint: 'def cifrar(texto):\n    partes = []\n    for c in texto:\n        partes.append(str(ord(c)))\n    return "-".join(partes)\n\nprint(cifrar("PY"))',
+    starter: '# Función de cifrado ASCII\n\ndef cifrar(texto):\n    partes = []\n    for c in texto:\n        \n    return \n\nprint(cifrar("PY"))\n',
+    validate: (output) => output.trim() === '80-89'
+  }
+];
+
+// ══════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════
+let pyodide = null;
+let currentMission = 0;
+let xp = 0;
+let level = 1;
+const xpPerLevel = 100;
+const completed = new Set();
+
+// ══════════════════════════════════════════════
+//  INIT PYODIDE
+// ══════════════════════════════════════════════
+async function initPyodide() {
+  const loaderText = document.getElementById('loader-text');
+  try {
+    loaderText.textContent = 'CARGANDO PYODIDE RUNTIME...';
+    pyodide = await loadPyodide();
+    loaderText.textContent = 'CONFIGURANDO ENTORNO SEGURO...';
+    await new Promise(r => setTimeout(r, 500));
+    loaderText.textContent = '¡SISTEMA ONLINE!';
+    await new Promise(r => setTimeout(r, 600));
+    document.getElementById('loader-screen').style.opacity = '0';
+    document.getElementById('loader-screen').style.transition = 'opacity 0.5s';
+    await new Promise(r => setTimeout(r, 500));
+    document.getElementById('loader-screen').style.display = 'none';
+    initGame();
+  } catch(e) {
+    loaderText.textContent = 'ERROR: ' + e.message;
+    loaderText.style.color = 'var(--red)';
+  }
+}
+
+// ══════════════════════════════════════════════
+//  INIT GAME
+// ══════════════════════════════════════════════
+function initGame() {
+  renderMissionList();
+  loadMission(0);
+  updateStats();
+}
+
+function renderMissionList() {
+  const list = document.getElementById('mission-list');
+  list.innerHTML = '';
+  missions.forEach((m, i) => {
+    const div = document.createElement('div');
+    div.className = `mission-item${completed.has(i) ? ' completed' : ''}${i === currentMission ? ' active' : ''}`;
+    div.onclick = () => loadMission(i);
+    div.innerHTML = `
+      <div class="mission-num">${m.id}</div>
+      <div class="mission-name">${m.name}</div>
+      <span class="mission-diff diff-${m.diff}">${m.diff.toUpperCase()}</span>
+    `;
+    list.appendChild(div);
+  });
+  document.getElementById('stat-missions').textContent = `${completed.size}/${missions.length}`;
+}
+
+function loadMission(idx) {
+  currentMission = idx;
+  const m = missions[idx];
+  document.getElementById('brief-id').textContent = m.id;
+  document.getElementById('brief-xp').textContent = `+${m.xp} XP`;
+  document.getElementById('brief-title').textContent = m.name;
+  document.getElementById('brief-story').textContent = m.story;
+  document.getElementById('brief-objective').innerHTML = m.objective;
+  document.getElementById('hint-box').textContent = m.hint;
+  document.getElementById('hint-box').classList.remove('visible');
+  document.getElementById('code-editor').value = m.starter;
+  document.getElementById('output-content').innerHTML = '<span class="out-system">&gt; Esperando código...</span>';
+  document.getElementById('output-status').textContent = 'IDLE';
+  document.getElementById('output-status').className = 'out-system';
+  const banner = document.getElementById('result-banner');
+  banner.className = 'result-banner';
+  renderMissionList();
+}
+
+function toggleHint() {
+  const h = document.getElementById('hint-box');
+  h.classList.toggle('visible');
+}
+
+// ══════════════════════════════════════════════
+//  RUN CODE
+// ══════════════════════════════════════════════
+async function runCode() {
+  if (!pyodide) return;
+  const btn = document.getElementById('run-btn');
+  const code = document.getElementById('code-editor').value;
+  const outEl = document.getElementById('output-content');
+  const statusEl = document.getElementById('output-status');
+
+  btn.disabled = true;
+  btn.classList.add('loading');
+  btn.textContent = '';
+  statusEl.textContent = 'EJECUTANDO...';
+  statusEl.className = 'out-warn';
+
+  let capturedOutput = '';
+  let isError = false;
+
+  try {
+    // Redirect stdout
+    pyodide.runPython(`
+import sys, io
+_stdout_capture = io.StringIO()
+sys.stdout = _stdout_capture
+`);
+    pyodide.runPython(code);
+    capturedOutput = pyodide.runPython(`
+sys.stdout = sys.__stdout__
+_stdout_capture.getvalue()
+`);
+  } catch (err) {
+    try { pyodide.runPython('import sys; sys.stdout = sys.__stdout__'); } catch(e) {}
+    capturedOutput = err.message;
+    isError = true;
+  }
+
+  // Display output
+  const displayOutput = capturedOutput || (isError ? '' : '(sin output)');
+  const className = isError ? 'out-error' : 'out-success';
+  outEl.innerHTML = `<span class="${className}">${escapeHtml(displayOutput)}</span>`;
+  statusEl.textContent = isError ? 'ERROR' : 'OK';
+  statusEl.className = isError ? 'out-error' : 'out-success';
+
+  // Validate
+  if (!isError) {
+    const m = missions[currentMission];
+    const pass = m.validate(capturedOutput);
+    showResult(pass, capturedOutput);
+  } else {
+    const banner = document.getElementById('result-banner');
+    banner.className = 'result-banner fail';
+    document.getElementById('result-icon').textContent = '✗';
+    document.getElementById('result-text').textContent = 'ERROR EN EJECUCIÓN — revisa tu código';
+  }
+
+  btn.disabled = false;
+  btn.classList.remove('loading');
+  btn.textContent = '▶ EJECUTAR';
+}
+
+function showResult(pass, output) {
+  const banner = document.getElementById('result-banner');
+  const icon = document.getElementById('result-icon');
+  const text = document.getElementById('result-text');
+
+  if (pass) {
+    banner.className = 'result-banner success';
+    icon.textContent = '⚡';
+    text.textContent = `MISIÓN COMPLETADA — +${missions[currentMission].xp} XP GANADOS`;
+    if (!completed.has(currentMission)) {
+      completed.add(currentMission);
+      addXP(missions[currentMission].xp);
+    }
+    renderMissionList();
+    setTimeout(() => {
+      if (currentMission < missions.length - 1) {
+        showNotif('▶ Siguiente misión desbloqueada');
+      }
+    }, 1000);
+  } else {
+    banner.className = 'result-banner fail';
+    icon.textContent = '✗';
+    text.textContent = 'OUTPUT INCORRECTO — verifica el resultado esperado';
+  }
+}
+
+function addXP(amount) {
+  xp += amount;
+  while (xp >= xpPerLevel) {
+    xp -= xpPerLevel;
+    level++;
+    document.getElementById('stat-level').classList.add('glitch');
+    setTimeout(() => document.getElementById('stat-level').classList.remove('glitch'), 500);
+    showNotif(`⬆ NIVEL ${level} ALCANZADO`);
+  }
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('stat-level').textContent = String(level).padStart(2, '0');
+  document.getElementById('xp-bar').style.width = `${(xp / xpPerLevel) * 100}%`;
+  document.getElementById('xp-text').textContent = `${xp} / ${xpPerLevel}`;
+  document.getElementById('stat-missions').textContent = `${completed.size}/${missions.length}`;
+}
+
+function showNotif(msg) {
+  const n = document.getElementById('notif');
+  n.textContent = msg;
+  n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), 2500);
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Tab key in editor
+document.getElementById('code-editor').addEventListener('keydown', (e) => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const s = e.target.selectionStart;
+    const end = e.target.selectionEnd;
+    e.target.value = e.target.value.substring(0, s) + '    ' + e.target.value.substring(end);
+    e.target.selectionStart = e.target.selectionEnd = s + 4;
+  }
+});
+
+// Ctrl+Enter to run
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') runCode();
+});
+
+// Start
+initPyodide();
+</script>
+</body>
+</html>
