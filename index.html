@@ -986,6 +986,276 @@ const missions = [
     hint: 'def cifrar(texto):\n    partes = []\n    for c in texto:\n        partes.append(str(ord(c)))\n    return "-".join(partes)\n\nprint(cifrar("PY"))',
     starter: '# Función de cifrado ASCII\n\ndef cifrar(texto):\n    partes = []\n    for c in texto:\n        \n    return \n\nprint(cifrar("PY"))\n',
     validate: (output) => output.trim() === '80-89'
+  },
+
+  // ── BLOQUE II: STRINGS Y MANIPULACIÓN ──
+  {
+    id: 'M-013',
+    name: 'Protocolo de Strings',
+    diff: 'basico',
+    xp: 30,
+    story: 'Los mensajes en la red viajan como texto. Dominar los strings es dominar las comunicaciones.',
+    objective: 'Dado el string <code>msg = "hacker"</code>, imprime: su longitud con <code>len()</code>, en mayúsculas con <code>.upper()</code> y al revés usando slicing <code>[::-1]</code>. Tres líneas de output.',
+    hint: 'print(len(msg))\nprint(msg.upper())\nprint(msg[::-1])  # slicing inverso',
+    starter: '# Manipulación de strings\n\nmsg = "hacker"\n\n',
+    validate: (output) => {
+      const lines = output.trim().split('\n').map(l => l.trim());
+      return lines.includes('6') && lines.includes('HACKER') && lines.includes('rekcah');
+    }
+  },
+  {
+    id: 'M-014',
+    name: 'String Formatting',
+    diff: 'basico',
+    xp: 35,
+    story: 'Un hacker necesita generar mensajes dinámicos para confundir a los sistemas de defensa.',
+    objective: 'Usa un <strong>f-string</strong> para imprimir: <code>"AGENTE: Ghost | NIVEL: 7 | STATUS: ACTIVO"</code>. Las tres palabras en mayúsculas deben venir de variables.',
+    hint: 'nombre = "Ghost"\nnivel = 7\nstatus = "ACTIVO"\nprint(f"AGENTE: {nombre} | NIVEL: {nivel} | STATUS: {status}")',
+    starter: '# F-string dinámico\n\nnombre = "Ghost"\nnivel = 7\nstatus = "ACTIVO"\n\n',
+    validate: (output) => output.trim() === 'AGENTE: Ghost | NIVEL: 7 | STATUS: ACTIVO'
+  },
+  {
+    id: 'M-015',
+    name: 'Split & Join',
+    diff: 'intermedio',
+    xp: 50,
+    story: 'Interceptaste un mensaje cifrado separado por guiones. Necesitás dividirlo y reconstruirlo.',
+    objective: 'Dado <code>data = "NEO-TOKYO-2077"</code>, usa <code>.split("-")</code> para obtener una lista, luego úsala con <code>" ".join()</code> para imprimir <code>"NEO TOKYO 2077"</code>.',
+    hint: 'partes = data.split("-")  # ["NEO", "TOKYO", "2077"]\nresultado = " ".join(partes)\nprint(resultado)',
+    starter: '# Split y Join\n\ndata = "NEO-TOKYO-2077"\n\n',
+    validate: (output) => output.trim() === 'NEO TOKYO 2077'
+  },
+  {
+    id: 'M-016',
+    name: 'Contador de Frecuencias',
+    diff: 'intermedio',
+    xp: 55,
+    story: 'Analizás el tráfico de red. Necesitás saber cuántas veces aparece cada paquete.',
+    objective: 'Dado <code>paquetes = ["A","B","A","C","B","A"]</code>, cuenta cuántas veces aparece cada elemento usando un diccionario. Imprime el conteo de <code>"A"</code>, <code>"B"</code> y <code>"C"</code> en ese orden.',
+    hint: 'conteo = {}\nfor p in paquetes:\n    conteo[p] = conteo.get(p, 0) + 1\nprint(conteo["A"])\nprint(conteo["B"])\nprint(conteo["C"])',
+    starter: '# Contador de frecuencias\n\npaquetes = ["A","B","A","C","B","A"]\nconteo = {}\n\n',
+    validate: (output) => {
+      const lines = output.trim().split('\n').map(l => l.trim());
+      return lines[0] === '3' && lines[1] === '2' && lines[2] === '1';
+    }
+  },
+
+  // ── BLOQUE III: ESTRUCTURAS Y ALGORITMOS ──
+  {
+    id: 'M-017',
+    name: 'While Loop Infiltrado',
+    diff: 'intermedio',
+    xp: 50,
+    story: 'El sistema de seguridad tiene un contador regresivo. Debes replicarlo para sincronizar tu ataque.',
+    objective: 'Usa un loop <code>while</code> para imprimir los números del <strong>5 al 1</strong> (descendente), uno por línea. Luego imprime <code>"BOOM"</code>.',
+    hint: 'contador = 5\nwhile contador > 0:\n    print(contador)\n    contador -= 1\nprint("BOOM")',
+    starter: '# Cuenta regresiva\n\ncontador = 5\n\n',
+    validate: (output) => {
+      const lines = output.trim().split('\n').map(l => l.trim());
+      return lines.join(',') === '5,4,3,2,1,BOOM';
+    }
+  },
+  {
+    id: 'M-018',
+    name: 'Filtro de Señales',
+    diff: 'intermedio',
+    xp: 60,
+    story: 'Entre todo el ruido de la red, necesitás filtrar solo las señales relevantes: los números pares.',
+    objective: 'Dada la lista <code>señales = [1,2,3,4,5,6,7,8,9,10]</code>, usa una list comprehension para crear una nueva lista solo con los números pares. Imprime la lista.',
+    hint: 'pares = [x for x in señales if x % 2 == 0]\nprint(pares)',
+    starter: '# Filtro de señales pares\n\nseñales = [1,2,3,4,5,6,7,8,9,10]\n\n',
+    validate: (output) => output.trim() === '[2, 4, 6, 8, 10]'
+  },
+  {
+    id: 'M-019',
+    name: 'Bubble Sort Clandestino',
+    diff: 'avanzado',
+    xp: 80,
+    story: 'Los datos de inteligencia llegaron desordenados. Implementá bubble sort para clasificarlos.',
+    objective: 'Implementa <strong>bubble sort</strong> manualmente (sin usar <code>.sort()</code> ni <code>sorted()</code>) para ordenar la lista <code>[64, 34, 25, 12, 22, 11, 90]</code> de menor a mayor. Imprime la lista ordenada.',
+    hint: 'lista = [64,34,25,12,22,11,90]\nn = len(lista)\nfor i in range(n):\n    for j in range(0, n-i-1):\n        if lista[j] > lista[j+1]:\n            lista[j], lista[j+1] = lista[j+1], lista[j]\nprint(lista)',
+    starter: '# Bubble Sort manual\n\nlista = [64, 34, 25, 12, 22, 11, 90]\n\n# implementa el algoritmo aquí\n\nprint(lista)\n',
+    validate: (output) => output.trim() === '[11, 12, 22, 25, 34, 64, 90]'
+  },
+  {
+    id: 'M-020',
+    name: 'Recursión Profunda',
+    diff: 'avanzado',
+    xp: 85,
+    story: 'Para penetrar capas de seguridad, necesitás una función que se llame a sí misma. La recursión es tu llave.',
+    objective: 'Crea una función recursiva <code>factorial(n)</code> que calcule el factorial de un número. Imprime <code>factorial(6)</code>.',
+    hint: 'def factorial(n):\n    if n == 0 or n == 1:\n        return 1\n    return n * factorial(n - 1)\n\nprint(factorial(6))',
+    starter: '# Función recursiva: factorial\n\ndef factorial(n):\n    if n == 0 or n == 1:\n        return 1\n    \n\nprint(factorial(6))\n',
+    validate: (output) => output.trim() === '720'
+  },
+
+  // ── BLOQUE IV: MANEJO DE ERRORES Y MÓDULOS ──
+  {
+    id: 'M-021',
+    name: 'Try-Except Blindado',
+    diff: 'intermedio',
+    xp: 65,
+    story: 'Todo sistema robusto maneja sus propios fallos. Sin manejo de errores, un crash te expone.',
+    objective: 'Intenta convertir el string <code>"GHOST"</code> a entero con <code>int()</code> dentro de un bloque <code>try</code>. Captura el <code>ValueError</code> e imprime exactamente: <code>"ERROR: conversion fallida"</code>.',
+    hint: 'try:\n    numero = int("GHOST")\nexcept ValueError:\n    print("ERROR: conversion fallida")',
+    starter: '# Manejo de excepciones\n\ntry:\n    \nexcept ValueError:\n    \n',
+    validate: (output) => output.trim() === 'ERROR: conversion fallida'
+  },
+  {
+    id: 'M-022',
+    name: 'Módulo Matemático',
+    diff: 'basico',
+    xp: 40,
+    story: 'La criptografía se basa en matemáticas. Python tiene el módulo <code>math</code> como aliado.',
+    objective: 'Importa el módulo <code>math</code>. Imprime en líneas separadas: <code>math.pi</code> redondeado a 2 decimales con <code>round()</code>, y la raíz cuadrada de 144 con <code>math.sqrt()</code>.',
+    hint: 'import math\nprint(round(math.pi, 2))\nprint(math.sqrt(144))',
+    starter: '# Módulo math\n\nimport math\n\n',
+    validate: (output) => {
+      const lines = output.trim().split('\n').map(l => l.trim());
+      return lines[0] === '3.14' && (lines[1] === '12.0' || lines[1] === '12');
+    }
+  },
+  {
+    id: 'M-023',
+    name: 'Random Infiltrado',
+    diff: 'basico',
+    xp: 40,
+    story: 'Para generar contraseñas y ruido en la red, necesitás aleatoriedad controlada.',
+    objective: 'Importa <code>random</code>. Usa <code>random.seed(42)</code> para fijar la semilla. Luego imprime un número entero aleatorio entre 1 y 100 con <code>random.randint(1, 100)</code>.',
+    hint: 'import random\nrandom.seed(42)\nprint(random.randint(1, 100))',
+    starter: '# Módulo random con semilla fija\n\nimport random\nrandom.seed(42)\n\n',
+    validate: (output) => output.trim() === '7'
+  },
+
+  // ── BLOQUE V: PROGRAMACIÓN ORIENTADA A OBJETOS ──
+  {
+    id: 'M-024',
+    name: 'Herencia Cibernética',
+    diff: 'avanzado',
+    xp: 90,
+    story: 'Los hackers élite evolucionan sus herramientas. La herencia permite construir sobre lo existente.',
+    objective: 'Crea clase base <code>Agente</code> con <code>__init__(nombre)</code> y método <code>info()</code> que retorne <code>f"Agente: {self.nombre}"</code>. Luego crea subclase <code>HackerElite</code> que herede de <code>Agente</code> y sobreescriba <code>info()</code> retornando <code>f"[ELITE] Agente: {self.nombre}"</code>. Imprime <code>HackerElite("Zero").info()</code>.',
+    hint: 'class Agente:\n    def __init__(self, nombre):\n        self.nombre = nombre\n    def info(self):\n        return f"Agente: {self.nombre}"\n\nclass HackerElite(Agente):\n    def info(self):\n        return f"[ELITE] Agente: {self.nombre}"\n\nprint(HackerElite("Zero").info())',
+    starter: '# Herencia de clases\n\nclass Agente:\n    def __init__(self, nombre):\n        self.nombre = nombre\n    def info(self):\n        return f"Agente: {self.nombre}"\n\nclass HackerElite(Agente):\n    def info(self):\n        \n\nprint(HackerElite("Zero").info())\n',
+    validate: (output) => output.trim() === '[ELITE] Agente: Zero'
+  },
+  {
+    id: 'M-025',
+    name: 'Propiedades Ocultas',
+    diff: 'avanzado',
+    xp: 85,
+    story: 'Los datos sensibles deben estar protegidos. Los atributos privados y properties son tu escudo.',
+    objective: 'Crea una clase <code>Vault</code> con atributo privado <code>__clave</code> inicializado en <code>"XK-47"</code>. Agrega una property <code>clave</code> que retorne <code>"***"</code> (oculta la clave real). Imprime <code>Vault().clave</code>.',
+    hint: 'class Vault:\n    def __init__(self):\n        self.__clave = "XK-47"\n    @property\n    def clave(self):\n        return "***"\n\nprint(Vault().clave)',
+    starter: '# Atributos privados y properties\n\nclass Vault:\n    def __init__(self):\n        self.__clave = "XK-47"\n    \n    @property\n    def clave(self):\n        \n\nprint(Vault().clave)\n',
+    validate: (output) => output.trim() === '***'
+  },
+
+  // ── BLOQUE VI: FUNCIONES AVANZADAS ──
+  {
+    id: 'M-026',
+    name: 'Lambda Encubierta',
+    diff: 'intermedio',
+    xp: 60,
+    story: 'Las funciones anónimas son armas de un solo uso: discretas y letales.',
+    objective: 'Crea una función lambda llamada <code>doble</code> que multiplique su argumento por 2. Luego úsala con <code>map()</code> sobre la lista <code>[1,2,3,4,5]</code> e imprime el resultado como lista.',
+    hint: 'doble = lambda x: x * 2\nresultado = list(map(doble, [1,2,3,4,5]))\nprint(resultado)',
+    starter: '# Lambda + map\n\ndoble = lambda x: \n\nresultado = list(map(doble, [1,2,3,4,5]))\nprint(resultado)\n',
+    validate: (output) => output.trim() === '[2, 4, 6, 8, 10]'
+  },
+  {
+    id: 'M-027',
+    name: 'Filter & Reduce',
+    diff: 'avanzado',
+    xp: 80,
+    story: 'Procesás una señal de radio pirateada. Necesitás filtrar y reducir los datos en un solo pipeline.',
+    objective: 'Usa <code>filter()</code> para quedarte solo con los números mayores a 3 de la lista <code>[1,2,3,4,5,6]</code>. Luego usa <code>functools.reduce()</code> para sumarlos todos. Imprime el resultado.',
+    hint: 'from functools import reduce\nnums = [1,2,3,4,5,6]\nfiltrados = list(filter(lambda x: x > 3, nums))\ntotal = reduce(lambda a, b: a + b, filtrados)\nprint(total)',
+    starter: '# Filter + Reduce\nfrom functools import reduce\n\nnums = [1,2,3,4,5,6]\n\n',
+    validate: (output) => output.trim() === '15'
+  },
+  {
+    id: 'M-028',
+    name: 'Generadores Fantasma',
+    diff: 'avanzado',
+    xp: 90,
+    story: 'Un generador produce valores uno a uno, sin cargar todo en memoria. Perfecto para operaciones sigilosas.',
+    objective: 'Crea un generador <code>contador(n)</code> que use <code>yield</code> para generar números del 0 al n-1. Llámalo con <code>n=4</code> e imprime cada valor en un loop.',
+    hint: 'def contador(n):\n    for i in range(n):\n        yield i\n\nfor num in contador(4):\n    print(num)',
+    starter: '# Generador con yield\n\ndef contador(n):\n    for i in range(n):\n        \n\nfor num in contador(4):\n    print(num)\n',
+    validate: (output) => {
+      const lines = output.trim().split('\n').map(l => l.trim());
+      return lines.join(',') === '0,1,2,3';
+    }
+  },
+
+  // ── BLOQUE VII: ESTRUCTURAS AVANZADAS ──
+  {
+    id: 'M-029',
+    name: 'Set de Intrusos',
+    diff: 'intermedio',
+    xp: 55,
+    story: 'Detectaste IPs duplicadas en los logs. Los sets eliminan duplicados automáticamente.',
+    objective: 'Dado <code>ips = ["10.0.0.1","10.0.0.2","10.0.0.1","10.0.0.3","10.0.0.2"]</code>, convierte a un <code>set</code> para eliminar duplicados. Imprime cuántas IPs únicas hay con <code>len()</code>.',
+    hint: 'ips = ["10.0.0.1","10.0.0.2","10.0.0.1","10.0.0.3","10.0.0.2"]\nunicas = set(ips)\nprint(len(unicas))',
+    starter: '# Sets: eliminar duplicados\n\nips = ["10.0.0.1","10.0.0.2","10.0.0.1","10.0.0.3","10.0.0.2"]\n\n',
+    validate: (output) => output.trim() === '3'
+  },
+  {
+    id: 'M-030',
+    name: 'Tuplas Inmutables',
+    diff: 'basico',
+    xp: 35,
+    story: 'Algunas coordenadas en la red nunca deben cambiar. Las tuplas son datos sellados.',
+    objective: 'Crea una tupla <code>coords = (40, -74)</code>. Imprime el primer elemento, el segundo, y la longitud de la tupla con <code>len()</code>.',
+    hint: 'coords = (40, -74)\nprint(coords[0])\nprint(coords[1])\nprint(len(coords))',
+    starter: '# Tuplas inmutables\n\ncoords = (40, -74)\n\n',
+    validate: (output) => {
+      const lines = output.trim().split('\n').map(l => l.trim());
+      return lines[0] === '40' && lines[1] === '-74' && lines[2] === '2';
+    }
+  },
+  {
+    id: 'M-031',
+    name: 'Dict Comprehension',
+    diff: 'avanzado',
+    xp: 75,
+    story: 'Necesitás mapear rápidamente puertos a sus servicios conocidos. La dict comprehension es tu arma.',
+    objective: 'Dadas las listas <code>puertos = [80, 443, 22]</code> y <code>servicios = ["HTTP", "HTTPS", "SSH"]</code>, crea un diccionario usando <strong>dict comprehension</strong> con <code>zip()</code>. Imprime el valor de la clave <code>443</code>.',
+    hint: 'puertos = [80, 443, 22]\nservicios = ["HTTP", "HTTPS", "SSH"]\nmapa = {p: s for p, s in zip(puertos, servicios)}\nprint(mapa[443])',
+    starter: '# Dict comprehension\n\npuertos = [80, 443, 22]\nservicios = ["HTTP", "HTTPS", "SSH"]\n\nmapa = \n\nprint(mapa[443])\n',
+    validate: (output) => output.trim() === 'HTTPS'
+  },
+
+  // ── BLOQUE VIII: DESAFÍOS FINALES ──
+  {
+    id: 'M-032',
+    name: 'FizzBuzz Cibernético',
+    diff: 'intermedio',
+    xp: 65,
+    story: 'Clásico test de reclutamiento del colectivo CYPHER. Simple en apariencia, revelador en ejecución.',
+    objective: 'Para números del 1 al 15: imprime <code>"FIZZ"</code> si es divisible por 3, <code>"BUZZ"</code> si por 5, <code>"FIZZBUZZ"</code> si por ambos, o el número si ninguno aplica.',
+    hint: 'for i in range(1, 16):\n    if i % 15 == 0:\n        print("FIZZBUZZ")\n    elif i % 3 == 0:\n        print("FIZZ")\n    elif i % 5 == 0:\n        print("BUZZ")\n    else:\n        print(i)',
+    starter: '# FizzBuzz Cibernético\n\nfor i in range(1, 16):\n    \n',
+    validate: (output) => {
+      const expected = '1,2,FIZZ,4,BUZZ,FIZZ,7,8,FIZZ,BUZZ,11,FIZZ,13,14,FIZZBUZZ';
+      const lines = output.trim().split('\n').map(l => l.trim());
+      return lines.join(',') === expected;
+    }
+  },
+  {
+    id: 'M-033',
+    name: 'Número Primo',
+    diff: 'intermedio',
+    xp: 70,
+    story: 'Los números primos son la base de la criptografía. Necesitás un detector de primos.',
+    objective: 'Crea una función <code>es_primo(n)</code> que retorne <code>True</code> si n es primo, <code>False</code> si no. Imprime el resultado de llamarla con <code>17</code> y con <code>18</code>, en líneas separadas.',
+    hint: 'def es_primo(n):\n    if n < 2: return False\n    for i in range(2, int(n**0.5) + 1):\n        if n % i == 0:\n            return False\n    return True\nprint(es_primo(17))\nprint(es_primo(18))',
+    starter: '# Detector de números primos\n\ndef es_primo(n):\n    if n < 2:\n        return False\n    \n\nprint(es_primo(17))\nprint(es_primo(18))\n',
+    validate: (output) => {
+      const lines = output.trim().split('\n').map(l => l.trim());
+      return lines[0] === 'True' && lines[1] === 'False';
+    }
   }
 ];
 
